@@ -26,28 +26,15 @@ This project aims to make policy knowledge more transparent, auditable, and acce
 
 ---
 
-## Graphical Workflow
+## Overview
+PolicyMind-AI is an open-source GraphRAG platform for explainable question answering over policy documents...
+
+## Visual Workflow
 
 ```mermaid
-flowchart TD
-    A[User Uploads Policy PDFs] --> B[PDF Text Extraction]
-    B --> C[Chunking with Metadata]
-    C --> D[Embedding Generation]
-    D --> E[ChromaDB Vector Store]
-
-    C --> F[Entity Extraction]
-    F --> G[Relationship Extraction]
-    G --> H[Neo4j Knowledge Graph]
-
-    I[User Question] --> J[Question Understanding]
-    J --> K[Vector Retrieval from ChromaDB]
-    J --> L[Graph Retrieval from Neo4j]
-
-    K --> M[Context Fusion]
-    L --> M
-
-    M --> N[LLM Answer Generation]
-    N --> O[Citation Engine]
-    O --> P[Final Answer with Sources]
-    O --> Q[Graph Evidence]
-    O --> R[Confidence Note]
+flowchart LR
+    A[Policy Documents] --> B[AI Document Processing]
+    B --> C[Knowledge Graph + Vector Search]
+    C --> D[Ask Questions]
+    D --> E[Explainable Answers]
+    E --> F[Citations + Graph Evidence]
