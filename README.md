@@ -1,20 +1,53 @@
-# PolicyMind-AI-RAG-Powered-Document-Intelligence-Platform
-An end-to-end RAG platform that transforms static policy documents into an interactive intelligence layer — semantic search, LLM-powered Q&amp;A, and explainable source citations via LangChain, ChromaDB &amp; FastAPI.
+# PolicyMind-AI: GraphRAG-Powered Policy Document Intelligence Platform
 
+PolicyMind-AI is an open-source GraphRAG system that transforms long policy PDFs into searchable knowledge graphs and citation-backed answers. It combines vector retrieval, entity extraction, Neo4j graph reasoning, and explainable LLM responses to support transparent policy research.
 
-## Features
-- Document upload and processing
-- Semantic search / retrieval
-- AI-powered question answering
-- RAG-based response generation
-- Clean project structure for future expansion
+---
 
-## Tech Stack
-- Python
-- LangChain / RAG concepts
-- Vector database concepts
-- Streamlit or Flask
-- GitHub
+## Why PolicyMind-AI?
 
-## Project Status
-This project is currently under development.
+Traditional RAG systems retrieve text chunks, but policy analysis requires more than text similarity. Analysts often need to understand relationships between countries, organizations, sectors, programs, regions, and policy goals.
+
+PolicyMind-AI addresses this by combining:
+
+- Semantic search for relevant document chunks
+- Knowledge graph extraction for entity relationships
+- GraphRAG retrieval for connected evidence
+- Citation-backed answers for traceability
+- Explainability layer showing sources and graph evidence
+
+---
+
+## Public Interest Motivation
+
+Policy documents influence decisions in climate, education, poverty reduction, digital development, health, and economic planning. However, these documents are often long, fragmented, and difficult to compare.
+
+This project aims to make policy knowledge more transparent, auditable, and accessible by helping researchers, civic technology teams, nonprofit organizations, and public-sector analysts ask questions over complex documents with source-backed evidence.
+
+---
+
+## Graphical Workflow
+
+```mermaid
+flowchart TD
+    A[User Uploads Policy PDFs] --> B[PDF Text Extraction]
+    B --> C[Chunking with Metadata]
+    C --> D[Embedding Generation]
+    D --> E[ChromaDB Vector Store]
+
+    C --> F[Entity Extraction]
+    F --> G[Relationship Extraction]
+    G --> H[Neo4j Knowledge Graph]
+
+    I[User Question] --> J[Question Understanding]
+    J --> K[Vector Retrieval from ChromaDB]
+    J --> L[Graph Retrieval from Neo4j]
+
+    K --> M[Context Fusion]
+    L --> M
+
+    M --> N[LLM Answer Generation]
+    N --> O[Citation Engine]
+    O --> P[Final Answer with Sources]
+    O --> Q[Graph Evidence]
+    O --> R[Confidence Note]
