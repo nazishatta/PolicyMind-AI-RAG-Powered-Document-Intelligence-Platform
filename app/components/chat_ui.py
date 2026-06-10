@@ -44,7 +44,9 @@ def _render_confidence_metric(confidence: float) -> None:
 
 def _render_answer_type_badge(answer_type: str) -> None:
     """Render a colour-coded alert as the answer-type badge."""
-    if answer_type == "graph_rag":
+    if answer_type == "map_reduce":
+        st.success("Answer Type: Map-Reduce Analysis  ✓  (multi-document synthesis)")
+    elif answer_type == "graph_rag":
         st.success("Answer Type: GraphRAG Answer  ✓  (knowledge graph + document evidence)")
     elif answer_type == "Document Answer":
         st.success(f"Answer Type: {answer_type}  ✓  (grounded in uploaded documents)")
@@ -120,6 +122,15 @@ def _render_rag_result(rag_result: dict[str, Any]) -> None:
     # ------------------------------------------------------------------ #
     st.markdown("---")
 
+    # Routing decision badge (small, above the query type)
+    routing = rag_result.get("routing_decision", "standard_rag")
+    if routing == "map_reduce":
+        st.info("🗂️ **Routing:** Map-Reduce — analyzing each document independently")
+    elif routing == "graph_rag":
+        st.info("🧠 **Routing:** GraphRAG — using knowledge graph + vector search")
+    else:
+        st.info("🔍 **Routing:** Standard RAG — semantic vector search")
+
     # Query-type caption badge (small, above the answer)
     query_label = _QUERY_TYPE_LABELS.get(query_type, query_type.title())
     st.caption(f"Query detected as: **{query_label}**")
@@ -137,6 +148,42 @@ def _render_rag_result(rag_result: dict[str, Any]) -> None:
             "This response supplements document evidence with general AI knowledge. "
             "Always verify important facts against authoritative sources."
         )
+
+    # ------------------------------------------------------------------ #
+    # Map-Reduce per-document analysis (when Map-Reduce was used)         #
+    # ------------------------------------------------------------------ #
+    per_doc_summaries = rag_result.get("per_doc_summaries", [])
+    docs_successful = rag_result.get("docs_successful", 0)
+    docs_failed = rag_result.get("docs_failed", 0)
+    document_errors = rag_result.get("document_errors", [])
+
+    if per_doc_summaries and answer_type in ("map_reduce", "single_document_summary"):
+        successful_summaries = [s for s in per_doc_summaries if s.get("success", False)]
+        if successful_summaries:
+            with st.expander(
+                f"Per-Document Analysis ({docs_successful} successful, "
+                f"{docs_failed} failed)" if docs_failed > 0
+                else f"Per-Document Analysis ({docs_successful} documents)",
+                expanded=False,
+            ):
+                for summary in successful_summaries:
+                    st.subheader(summary["doc_name"])
+                    st.write(summary.get("summary", "(No analysis available)"))
+                    st.caption(
+                        f"Chunks analyzed: {summary['chunks_used']}  |  "
+                        f"Avg relevance: {summary['avg_score']:.0%}"
+                    )
+                    st.divider()
+
+                if docs_failed > 0:
+                    st.warning(f"{docs_failed} document(s) failed to process")
+
+        # Show document errors if any
+        if document_errors:
+            with st.expander("Debug: Document processing errors", expanded=False):
+                for error in document_errors:
+                    if error:
+                        st.error(f"• {error}")
 
     # ------------------------------------------------------------------ #
     # Graph evidence (when GraphRAG was used)                              #
@@ -177,9 +224,11 @@ def _render_rag_result(rag_result: dict[str, Any]) -> None:
 
     with col_left:
         _render_confidence_metric(confidence)
+        # FIX BUG 4: Use len(sources_used) instead of len(results)
+        sources_count = len(rag_result.get("sources_used", []))
         st.metric(
             label="Sources Found",
-            value=len(results),
+            value=sources_count,
             help="Number of document chunks retrieved from the knowledge base.",
         )
 
@@ -191,11 +240,24 @@ def _render_rag_result(rag_result: dict[str, Any]) -> None:
             st.markdown(":orange[Partial Answer — docs supplemented with general knowledge]")
         elif answer_type == "Evidence Only":
             st.markdown(":blue[Evidence Only — no API key, showing raw retrieved text]")
+        elif answer_type == "single_document_summary":
+            # FIX BUG 3: Single document label
+            st.markdown(":green[Single Document Summary — grounded in uploaded document]")
+        elif answer_type == "map_reduce":
+            # FIX BUG 3: Multi-document label
+            st.markdown(":green[Multi-document Map-Reduce Summary — grounded in uploaded documents]")
         else:
             st.markdown(":blue[General / Fallback Answer]")
 
         st.markdown("**Fallback Used**")
-        if fallback_used:
+        # FIX BUG 6: Better fallback detection logic
+        is_fallback = (
+            fallback_used
+            or "fallback" in answer_type.lower()
+            or answer_type in ("General Answer", "Partial Answer")
+            or rag_result.get("provider") in ("none", "unknown")
+        )
+        if is_fallback:
             st.markdown(":orange[Yes — answer extends beyond document evidence]")
         else:
             st.markdown(":green[No — answer is fully grounded in uploaded documents]")
@@ -362,8 +424,7 @@ def render_chat_section(
     """
     st.subheader("Step 4 — Ask AI a Question")
 
-    _use_graph = graph_pipeline is not None and graph_pipeline.is_ready
-    if _use_graph:
+    if graph_pipeline is not None and graph_pipeline.is_ready:
         _spacy_note = (
             "" if graph_pipeline.spacy_available
             else " (vector-only — install spaCy for entity extraction)"
@@ -386,26 +447,25 @@ def render_chat_section(
             st.warning("Please enter a question before clicking Get Answer.")
         else:
             try:
+                from src.map_reduce_rag import route_and_answer  # noqa: PLC0415
+
+                _use_graph = graph_pipeline is not None and graph_pipeline.is_ready
                 spinner_msg = (
                     "Running hybrid GraphRAG pipeline (vector + graph)…"
                     if _use_graph
                     else "Searching documents and generating answer…"
                 )
                 with st.spinner(spinner_msg):
-                    if _use_graph:
-                        from src.graph_rag import answer_question_with_graph_rag  # noqa: PLC0415
-                        rag_result = answer_question_with_graph_rag(
-                            question, vector_store, graph_pipeline,
-                            document_filter=document_filter,
-                        )
-                    else:
-                        rag_result = answer_question_with_rag(
-                            question, vector_store, document_filter=document_filter
-                        )
+                    rag_result = route_and_answer(
+                        question,
+                        vector_store,
+                        graph_pipeline=graph_pipeline,
+                        document_filter=document_filter,
+                    )
                 st.session_state[_RESULT_KEY] = rag_result
                 logger.info(
-                    "Answer generated: query_type=%s, answer_type=%s, confidence=%.4f",
-                    rag_result.get("query_type"),
+                    "Answer generated: routing=%s, answer_type=%s, confidence=%.4f",
+                    rag_result.get("routing_decision", "unknown"),
                     rag_result.get("answer_type"),
                     rag_result.get("confidence", 0.0),
                 )

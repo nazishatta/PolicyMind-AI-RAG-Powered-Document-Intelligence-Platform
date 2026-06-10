@@ -18,6 +18,7 @@ from app.components.upload_ui import render_upload_section
 from src.logger import get_logger
 from src.text_splitter import split_documents_into_chunks
 from src.vector_store import create_vector_store, get_collection_stats, reset_vector_store
+from src.rag_chain import check_api_keys
 
 logger = get_logger(__name__)
 
@@ -113,6 +114,29 @@ upload policy documents and ask plain-language questions about their content.
         ):
             st.session_state.pop(_key, None)
         st.rerun()
+
+    # API key diagnostics
+    st.divider()
+    st.subheader("System Status")
+    _api_status = check_api_keys()
+
+    st.caption(f"Configuration: `{_api_status['env_path']}`")
+    if _api_status["env_exists"]:
+        st.success("✓ .env file found")
+    else:
+        st.warning("⚠ .env file not found")
+
+    # Groq status
+    if _api_status["groq_available"]:
+        st.success(f"✓ Groq connected ({_api_status['groq_key_length']} chars)")
+    else:
+        st.info(f"○ Groq not configured ({_api_status['groq_key_length']} chars)")
+
+    # OpenAI status
+    if _api_status["openai_available"]:
+        st.success(f"✓ OpenAI connected ({_api_status['openai_key_length']} chars)")
+    else:
+        st.info(f"○ OpenAI not configured ({_api_status['openai_key_length']} chars)")
 
 # ---------------------------------------------------------------------------
 # Title
@@ -355,7 +379,9 @@ else:
 latest_results: list = []
 
 if "rag_result" in st.session_state:
-    latest_results = st.session_state["rag_result"].get("results", [])
+    # FIX BUG 5: Use sources_used for map_reduce and single_document_summary
+    _rag_result = st.session_state["rag_result"]
+    latest_results = _rag_result.get("sources_used") or _rag_result.get("results", [])
 elif "search_results" in st.session_state:
     latest_results = st.session_state["search_results"]
 

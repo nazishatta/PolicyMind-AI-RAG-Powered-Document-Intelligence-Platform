@@ -15,9 +15,19 @@ Degrades gracefully at every level:
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
+
 from src.logger import get_logger
+
+# ============================================================================
+# ENV LOADING — Load .env file at module import time
+# ============================================================================
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+ENV_PATH = PROJECT_ROOT / ".env"
+load_dotenv(dotenv_path=ENV_PATH, override=True)
 
 logger = get_logger(__name__)
 

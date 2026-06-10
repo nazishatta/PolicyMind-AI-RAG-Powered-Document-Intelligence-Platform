@@ -4,8 +4,10 @@ OpenAI + Groq LLM integration."""
 from __future__ import annotations
 
 import os
+from pathlib import Path
 from typing import Any
 
+from dotenv import load_dotenv
 from langchain_community.vectorstores import Chroma
 
 from src.citation_utils import format_sources
@@ -13,7 +15,54 @@ from src.config import TOP_K_RESULTS
 from src.logger import get_logger
 from src.retriever import smart_search
 
+# ============================================================================
+# ENV LOADING — Load .env file at module import time
+# ============================================================================
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+ENV_PATH = PROJECT_ROOT / ".env"
+load_dotenv(dotenv_path=ENV_PATH, override=True)
+
 logger = get_logger(__name__)
+
+# ---------------------------------------------------------------------------
+# API Key Management — robust retrieval from .env
+# ---------------------------------------------------------------------------
+
+def get_env_key(name: str) -> str:
+    """Retrieve an environment variable, checking both os.getenv and os.environ.
+
+    Args:
+        name: Environment variable name (e.g. "GROQ_API_KEY").
+
+    Returns:
+        The variable value (stripped), or empty string if not found.
+    """
+    value = os.getenv(name, "").strip()
+    if not value:
+        value = os.environ.get(name, "").strip()
+    return value
+
+
+def check_api_keys() -> dict[str, Any]:
+    """Check which API keys are available and valid.
+
+    Returns:
+        Dict with availability flags, key lengths, and env diagnostics.
+        Keys: groq_available, openai_available, groq_key_length,
+        openai_key_length, env_path, env_exists.
+    """
+    groq = get_env_key("GROQ_API_KEY")
+    openai = get_env_key("OPENAI_API_KEY")
+
+    return {
+        "groq_available": bool(groq and groq.startswith("gsk_")),
+        "openai_available": bool(openai and openai.startswith("sk-")),
+        "groq_key_length": len(groq),
+        "openai_key_length": len(openai),
+        "env_path": str(ENV_PATH),
+        "env_exists": ENV_PATH.exists(),
+    }
+
 
 # ---------------------------------------------------------------------------
 # Optional Groq import — graceful degradation if package is not installed
@@ -270,7 +319,8 @@ def _call_openai(
     """
     from openai import OpenAI  # deferred — keeps startup fast when key absent
 
-    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+    api_key = get_env_key("OPENAI_API_KEY")
+    client = OpenAI(api_key=api_key)
     user_message = _build_llm_user_message(question, context, query_type, answer_type)
 
     response = client.chat.completions.create(
@@ -304,7 +354,8 @@ def _call_groq(
     Returns:
         Answer string from the model.
     """
-    client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+    api_key = get_env_key("GROQ_API_KEY")
+    client = Groq(api_key=api_key)
     user_message = _build_llm_user_message(question, context, query_type, answer_type)
 
     response = client.chat.completions.create(
@@ -351,8 +402,8 @@ def generate_rag_answer(
     Returns:
         Dict with keys: answer, answer_type, fallback_used, provider.
     """
-    openai_key = os.getenv("OPENAI_API_KEY", "").strip()
-    groq_key = os.getenv("GROQ_API_KEY", "").strip()
+    openai_key = get_env_key("OPENAI_API_KEY")
+    groq_key = get_env_key("GROQ_API_KEY")
 
     # Determine active provider
     if openai_key:
