@@ -1,0 +1,249 @@
+{
+  "_comment": "Sample API payloads for PolicyMind-AI. Each entry shows the HTTP method, endpoint, and request body. Example responses show the full trust-layer structure returned by the server.",
+
+  "requests": {
+
+    "ingest_text": {
+      "method": "POST",
+      "endpoint": "/api/v1/ingest",
+      "description": "Ingest a policy document from raw text (no download required).",
+      "body": {
+        "text": "The National Climate Strategy 2030 commits all signatory states to reduce greenhouse gas emissions by 55 percent relative to 1990 levels by 31 December 2030. Article 4 mandates a minimum 30 percent renewable energy share by 2025, rising to 65 percent by 2030. A Just Transition Fund of EUR 15 billion is established for 2025 to 2030, governed by a Board of member state representatives and independent experts. The European Commission shall publish annual compliance reports by 31 March each year. Non-compliant states may face suspension of Fund access and preferential trade arrangements.",
+        "title": "National Climate Strategy 2030",
+        "source_label": "EU Commission"
+      }
+    },
+
+    "ingest_url": {
+      "method": "POST",
+      "endpoint": "/api/v1/ingest",
+      "description": "Ingest a publicly accessible PDF or plain-text document by URL. The URL must not require authentication. Users are responsible for complying with the source document's licensing terms.",
+      "body": {
+        "url": "https://YOUR_PUBLIC_DOCUMENT_URL_HERE.pdf",
+        "title": "My Policy Document",
+        "source_label": "Source Organisation",
+        "max_file_size_mb": 20
+      }
+    },
+
+    "query_basic": {
+      "method": "POST",
+      "endpoint": "/api/v1/query",
+      "description": "Simple question answered across all ingested documents.",
+      "body": {
+        "question": "What are the key emission reduction commitments for 2030?"
+      }
+    },
+
+    "query_with_graph": {
+      "method": "POST",
+      "endpoint": "/api/v1/query",
+      "description": "Question with knowledge-graph evidence included in retrieval scoring.",
+      "body": {
+        "question": "What role does the Just Transition Fund play?",
+        "include_graph_evidence": true
+      }
+    },
+
+    "query_filtered": {
+      "method": "POST",
+      "endpoint": "/api/v1/query",
+      "description": "Question restricted to a single document and limited to 3 retrieved chunks.",
+      "body": {
+        "question": "How are non-compliant states penalised?",
+        "doc_id": "REPLACE_WITH_DOC_ID",
+        "top_k": 3,
+        "include_graph_evidence": true
+      }
+    },
+
+    "query_no_graph": {
+      "method": "POST",
+      "endpoint": "/api/v1/query",
+      "description": "Disable graph expansion for faster, vector-only retrieval.",
+      "body": {
+        "question": "What renewable energy targets are specified?",
+        "include_graph_evidence": false
+      }
+    },
+
+    "query_multihop": {
+      "method": "POST",
+      "endpoint": "/api/v1/query",
+      "description": "Multi-hop graph expansion (depth=2). Collects edges from 1-hop neighbours of matched entities in addition to direct edges. Useful when policy relationships span multiple entity-entity links (e.g. agency → programme → deadline). Indirect evidence is included with confidence discounted by 0.8.",
+      "body": {
+        "question": "Which agencies are responsible for just transition enforcement?",
+        "include_graph_evidence": true,
+        "graph_depth": 2
+      }
+    },
+
+    "graph_neighbours": {
+      "method": "GET",
+      "endpoint": "/api/v1/graph/neighbours",
+      "description": "Retrieve entities within 1–3 hops of a named entity.",
+      "url": "/api/v1/graph/neighbours?entity=European%20Commission&depth=1"
+    },
+
+    "graph_stats": {
+      "method": "GET",
+      "endpoint": "/api/v1/graph/stats",
+      "description": "Current knowledge graph statistics.",
+      "url": "/api/v1/graph/stats"
+    },
+
+    "list_documents": {
+      "method": "GET",
+      "endpoint": "/api/v1/documents",
+      "description": "List all documents currently indexed in the vector store.",
+      "url": "/api/v1/documents"
+    }
+  },
+
+  "example_responses": {
+
+    "ingest_response": {
+      "description": "Successful ingestion of the sample climate text above.",
+      "status": 201,
+      "body": {
+        "doc_id": "a3f1c9e2b8d74051",
+        "title": "National Climate Strategy 2030",
+        "source_url": null,
+        "page_count": 1,
+        "chunk_count": 1,
+        "entities_extracted": 6,
+        "graph_nodes_added": 4,
+        "processing_status": "completed",
+        "message": "Document ingested successfully."
+      }
+    },
+
+    "query_response_cited": {
+      "description": "Successful cited answer. All trust-layer fields are present. answer_type='cited' means confidence >= 0.35 and no refusal phrase detected.",
+      "status": 200,
+      "body": {
+        "query_id": "3f7a2c1d-9b4e-4a1c-8d3f-2e5b7c0a1d9e",
+        "question": "What emission reduction target is committed for 2030?",
+        "answer": "[MOCK ANSWER] Based on 1 retrieved passage(s) (p.1), the policy corpus contains relevant information about: 'What emission reduction target is committed for 2030?'. Key excerpt: \"The National Climate Strategy 2030 commits all signatory states to reduce greenhouse gas emissions by 55 percent...\". For a complete, synthesised answer, configure a real LLM provider via LLM_PROVIDER=anthropic or LLM_PROVIDER=openai.",
+        "answer_type": "cited",
+        "evidence_quality": "moderate",
+        "confidence_note": "Derived from 1 retrieved passage (mean top-3 cosine similarity: 0.61), without graph evidence. Evidence quality is moderate — verify key claims against the source.",
+        "citations": [
+          {
+            "chunk_id": "a3f1c9e2-p001-c000",
+            "doc_id": "a3f1c9e2b8d74051",
+            "doc_title": "National Climate Strategy 2030",
+            "page_number": 1,
+            "section_heading": null,
+            "excerpt": "The National Climate Strategy 2030 commits all signatory states to reduce greenhouse gas emissions by 55 percent relative to 1990 levels by 31 December 2030...",
+            "relevance_score": 0.6134
+          }
+        ],
+        "retrieved_chunks": [
+          {
+            "chunk_id": "a3f1c9e2-p001-c000",
+            "doc_id": "a3f1c9e2b8d74051",
+            "doc_title": "National Climate Strategy 2030",
+            "page_number": 1,
+            "section_heading": null,
+            "text": "The National Climate Strategy 2030 commits all signatory states to reduce greenhouse gas emissions by 55 percent relative to 1990 levels by 31 December 2030. Article 4 mandates a minimum 30 percent renewable energy share by 2025, rising to 65 percent by 2030. A Just Transition Fund of EUR 15 billion is established...",
+            "relevance_score": 0.6134
+          }
+        ],
+        "graph_evidence": [],
+        "confidence": 0.613,
+        "limitations": [
+          "Mock LLM provider active — responses are deterministic stubs. Set LLM_PROVIDER=anthropic or LLM_PROVIDER=openai for real answers.",
+          "No graph evidence matched this query. The retrieved passages may not contain recognised named entities."
+        ],
+        "latency_ms": 87.4,
+        "provider": "mock",
+        "model": "mock-model"
+      }
+    },
+
+    "query_response_no_corpus": {
+      "description": "Refusal when no documents are indexed (or none match the query). The LLM is never called — the pipeline refuses before generation to prevent hallucination.",
+      "status": 200,
+      "body": {
+        "query_id": "9c2d1e4f-a3b7-4f1e-9d2c-8b0a3e7f1c4d",
+        "question": "What emission reduction target is committed for 2030?",
+        "answer": "The available documents do not contain enough information to answer this question. No relevant passages were found in the indexed corpus. Please ingest the relevant policy documents and retry.",
+        "answer_type": "no_corpus",
+        "evidence_quality": "insufficient",
+        "confidence_note": "No passages were retrieved from the corpus. Confidence cannot be assessed — the response is a refusal.",
+        "citations": [],
+        "retrieved_chunks": [],
+        "graph_evidence": [],
+        "confidence": null,
+        "limitations": [
+          "Mock LLM provider active — responses are deterministic stubs. Set LLM_PROVIDER=anthropic or LLM_PROVIDER=openai for real answers.",
+          "No relevant passages were found in the corpus. Ingest more documents or broaden the question."
+        ],
+        "latency_ms": 3.1,
+        "provider": "mock",
+        "model": "mock-model"
+      }
+    },
+
+    "graph_stats_response": {
+      "description": "Graph statistics after ingesting the sample climate document with spaCy installed.",
+      "status": 200,
+      "body": {
+        "total_entities": 8,
+        "total_relations": 12,
+        "graph_provider": "memory",
+        "graph_enabled": false
+      }
+    },
+
+    "graph_neighbours_response": {
+      "description": "Neighbours of 'European Commission' at depth=1.",
+      "status": 200,
+      "body": {
+        "entity": "European Commission",
+        "neighbours": [
+          {
+            "id": "ent-0042",
+            "name": "Just Transition Fund",
+            "entity_type": "ORG",
+            "doc_id": "a3f1c9e2b8d74051"
+          },
+          {
+            "id": "ent-0007",
+            "name": "31 March",
+            "entity_type": "DATE",
+            "doc_id": "a3f1c9e2b8d74051"
+          }
+        ],
+        "edges": [
+          {
+            "source": "European Commission",
+            "target": "Just Transition Fund",
+            "relation": "MENTIONED_WITH",
+            "chunk_id": "a3f1c9e2-p001-c000",
+            "doc_id": "a3f1c9e2b8d74051"
+          }
+        ],
+        "total_entities": 8,
+        "total_relations": 12
+      }
+    }
+  },
+
+  "answer_type_reference": {
+    "_comment": "Quick reference for the answer_type field values.",
+    "cited": "Answer is grounded in retrieved passages at adequate confidence (>= 0.35).",
+    "partial": "Evidence found but weak or incomplete — confidence < 0.35, or LLM used the 'Based on limited evidence:' prefix.",
+    "refused": "LLM judged the retrieved context insufficient and declined to answer.",
+    "no_corpus": "No passages were retrieved — LLM was not called. Ingest relevant documents first."
+  },
+
+  "evidence_quality_reference": {
+    "_comment": "Quick reference for the evidence_quality field values.",
+    "strong": "confidence >= 0.7 AND >= 3 passages retrieved.",
+    "moderate": "confidence >= 0.5 AND >= 2 passages retrieved.",
+    "weak": "confidence >= 0.35.",
+    "insufficient": "confidence < 0.35 or no passages retrieved."
+  }
+}

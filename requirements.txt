@@ -1,0 +1,55 @@
+# Runtime dependencies — pinned for reproducibility
+# Install: pip install -r requirements.txt
+# Dev extras: pip install -r requirements-dev.txt
+
+# --- Web framework ---
+fastapi==0.111.1
+uvicorn[standard]==0.30.1
+python-multipart==0.0.9
+
+# --- Configuration ---
+pydantic==2.7.4
+pydantic-settings==2.3.4
+python-dotenv==1.0.1
+
+# --- LLM providers (both optional at runtime; one key required) ---
+anthropic==0.28.1
+openai==1.35.3
+groq>=0.9.0
+
+# --- Embeddings (local, no API key needed) ---
+sentence-transformers==3.0.1
+
+# --- Vector store ---
+chromadb==0.5.3
+
+# --- Graph (in-memory default; neo4j optional) ---
+networkx==3.3
+
+# --- Document parsing ---
+pdfplumber==0.11.1
+PyPDF2==3.0.1
+
+# --- NLP / entity extraction ---
+spacy==3.7.5
+
+# --- HTTP client (URL-based document loading) ---
+httpx==0.27.0
+
+# --- Observability ---
+structlog==24.2.0
+
+# --- Streamlit MVP layer ---
+streamlit>=1.35.0
+langchain>=0.2.0
+langchain-community>=0.2.0
+pymupdf>=1.24.0
+pypdf>=4.2.0
+tiktoken>=0.7.0
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.5.0
+pytest>=8.2.0
+
+# GraphRAG dependencies
+nest-asyncio>=1.6.0
