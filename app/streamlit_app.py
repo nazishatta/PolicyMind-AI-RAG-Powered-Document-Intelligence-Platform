@@ -156,7 +156,7 @@ with st.sidebar:
         "Technology": ["Streamlit", "all-MiniLM-L6-v2", "ChromaDB",
                        "NetworkX", "Groq LLaMA 3", "PyMuPDF"],
     }
-    st.dataframe(_tech_data, hide_index=True, use_container_width=True)
+    st.dataframe(_tech_data, hide_index=True, width="stretch")
     st.divider()
 
     # API status

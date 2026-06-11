@@ -105,7 +105,7 @@ def render_upload_section() -> list[dict[str, Any]] | None:
                 for n in all_names
             ],
         }
-        st.dataframe(table_data, use_container_width=True)
+        st.dataframe(table_data, width="stretch")
 
         # Totals row below the table
         col1, col2 = st.columns(2)
