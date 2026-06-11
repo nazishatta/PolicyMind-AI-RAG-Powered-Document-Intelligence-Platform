@@ -6,6 +6,7 @@ from typing import Any
 
 import streamlit as st
 
+from app.components.ui_helpers import render_step_header
 from src.document_loader import process_multiple_pdfs
 from src.logger import get_logger
 
@@ -23,7 +24,11 @@ def render_upload_section() -> list[dict[str, Any]] | None:
         Combined list of page dicts (document_name, page_number, text) from all
         successfully processed files, or None if nothing was uploaded.
     """
-    st.subheader("Step 1 — Upload Document")
+    render_step_header(
+        1,
+        "Upload Documents",
+        "Upload one or more PDF policy documents",
+    )
 
     uploaded_files = st.file_uploader(
         "Upload one or more PDF policy documents",
@@ -38,6 +43,17 @@ def render_upload_section() -> list[dict[str, Any]] | None:
     # Streamlit returns an empty list (not None) when accept_multiple_files=True
     # and nothing has been dropped yet.
     if not uploaded_files:
+        st.markdown("""
+<div style="text-align:center; padding:3rem;
+            color:#888; border:2px dashed #ddd;
+            border-radius:12px; margin:2rem 0;">
+    <h3>📄 No documents uploaded yet</h3>
+    <p>Upload a PDF policy document to get started</p>
+    <p style="font-size:0.85rem;">Supports: Policy reports,
+    World Bank documents, Government publications,
+    Research papers</p>
+</div>
+""", unsafe_allow_html=True)
         return None
 
     try:

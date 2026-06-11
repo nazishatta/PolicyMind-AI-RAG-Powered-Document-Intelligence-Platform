@@ -9,6 +9,7 @@ import streamlit as st
 
 from langchain_community.vectorstores import Chroma
 
+from app.components.ui_helpers import render_step_header
 from src.logger import get_logger
 from src.rag_chain import answer_question_with_rag
 
@@ -17,49 +18,48 @@ logger = get_logger(__name__)
 # Session-state key used to persist the last answer across Streamlit re-runs
 _RESULT_KEY = "_chat_last_rag_result"
 
-# Confidence thresholds for colour coding (match src/retriever.py)
-_CONF_STRONG: float = 0.65
-_CONF_MODERATE: float = 0.45
-
 
 # ---------------------------------------------------------------------------
 # Sub-renderers
 # ---------------------------------------------------------------------------
 
-def _render_confidence_metric(confidence: float) -> None:
-    """Render Retrieval Confidence as a colour-coded metric badge.
-
-    Green  ≥ 65%  — strong evidence from documents
-    Orange 45–65% — moderate evidence
-    Red    < 45%  — weak evidence, fallback likely
-    """
-    pct = f"{confidence:.1%}"
-    if confidence >= _CONF_STRONG:
-        st.success(f"Retrieval Confidence: **{pct}** — Strong document evidence")
-    elif confidence >= _CONF_MODERATE:
-        st.warning(f"Retrieval Confidence: **{pct}** — Moderate document evidence")
-    else:
-        st.error(f"Retrieval Confidence: **{pct}** — Weak evidence, using fallback")
-
-
 def _render_answer_type_badge(answer_type: str) -> None:
     """Render a colour-coded alert as the answer-type badge."""
-    if answer_type == "map_reduce":
-        st.success("Answer Type: Map-Reduce Analysis  ✓  (multi-document synthesis)")
-    elif answer_type == "graph_rag":
-        st.success("Answer Type: GraphRAG Answer  ✓  (knowledge graph + document evidence)")
-    elif answer_type == "Document Answer":
-        st.success(f"Answer Type: {answer_type}  ✓  (grounded in uploaded documents)")
+    at_lower = answer_type.lower()
+
+    if any(keyword in at_lower for keyword in ("summary", "map_reduce", "graph_rag", "document")):
+        if answer_type == "single_document_summary":
+            st.success("Answer Type: Single Document Summary  ✓  (grounded in uploaded document)")
+        elif answer_type == "map_reduce":
+            st.success("Answer Type: Map-Reduce Analysis  ✓  (multi-document synthesis)")
+        elif answer_type == "graph_rag":
+            st.success("Answer Type: GraphRAG Answer  ✓  (knowledge graph + document evidence)")
+        elif answer_type == "Document Answer":
+            st.success(f"Answer Type: {answer_type}  ✓  (grounded in uploaded documents)")
+        else:
+            st.success(f"Answer Type: {answer_type}  ✓  (document-grounded)")
+
     elif answer_type == "Partial Answer":
         st.warning(
             f"Answer Type: {answer_type}  ⚠  "
             "(document evidence supplemented with general knowledge)"
         )
-    elif answer_type in ("General Answer", "Evidence Only"):
+
+    elif answer_type == "Evidence Only":
+        st.info(
+            f"Answer Type: {answer_type}  ℹ  "
+            "(no API key configured; showing raw retrieved text)"
+        )
+
+    elif answer_type == "General Answer":
         st.info(
             f"Answer Type: {answer_type}  ℹ  "
             "(low document relevance — see note below)"
         )
+
+    elif answer_type in ("Error", "No Corpus"):
+        st.error(f"Answer Type: {answer_type}")
+
     else:
         st.error(f"Answer Type: {answer_type}")
 
@@ -97,32 +97,20 @@ _ANSWER_TYPE_LABELS: dict[str, str] = {
 
 
 def _render_rag_result(rag_result: dict[str, Any]) -> None:
-    """Render the full three-section answer layout.
-
-    Section A — Answer (full width):
-        query-type caption → coloured answer-type badge → answer markdown
-
-    Section B — Metrics (two columns):
-        left  → colour-coded Retrieval Confidence + Sources Found
-        right → Answer Type label + Fallback status
-
-    Section C — Sources expander:
-        one formatted citation per source
-    """
+    """Render the full answer layout with styled card, progress bar, and metrics."""
     answer = rag_result.get("answer", "")
     answer_type = rag_result.get("answer_type", "General Answer")
     query_type = rag_result.get("query_type", "general")
     confidence = float(rag_result.get("confidence", 0.0))
     fallback_used = bool(rag_result.get("fallback_used", False))
     sources = rag_result.get("sources", [])
-    results = rag_result.get("results", [])
 
     # ------------------------------------------------------------------ #
     # Section A — Answer                                                   #
     # ------------------------------------------------------------------ #
     st.markdown("---")
 
-    # Routing decision badge (small, above the query type)
+    # Routing decision badge
     routing = rag_result.get("routing_decision", "standard_rag")
     if routing == "map_reduce":
         st.info("🗂️ **Routing:** Map-Reduce — analyzing each document independently")
@@ -131,13 +119,17 @@ def _render_rag_result(rag_result: dict[str, Any]) -> None:
     else:
         st.info("🔍 **Routing:** Standard RAG — semantic vector search")
 
-    # Query-type caption badge (small, above the answer)
+    # Query-type caption badge
     query_label = _QUERY_TYPE_LABELS.get(query_type, query_type.title())
     st.caption(f"Query detected as: **{query_label}**")
 
     _render_answer_type_badge(answer_type)
-    st.markdown("#### Answer")
+
+    # Answer wrapped in styled card
+    st.markdown('<div class="answer-card">', unsafe_allow_html=True)
+    st.markdown("### 💬 Answer")
     st.markdown(answer)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     provider = rag_result.get("provider", "none")
     provider_label = _PROVIDER_LABELS.get(provider, "Unknown")
@@ -178,7 +170,6 @@ def _render_rag_result(rag_result: dict[str, Any]) -> None:
                 if docs_failed > 0:
                     st.warning(f"{docs_failed} document(s) failed to process")
 
-        # Show document errors if any
         if document_errors:
             with st.expander("Debug: Document processing errors", expanded=False):
                 for error in document_errors:
@@ -217,50 +208,42 @@ def _render_rag_result(rag_result: dict[str, Any]) -> None:
         st.caption("Retrieval enhanced by knowledge graph entity relationships")
 
     # ------------------------------------------------------------------ #
-    # Section B — Confidence metrics                                       #
+    # Section B — Confidence progress bar + metrics                        #
     # ------------------------------------------------------------------ #
     st.markdown("---")
-    col_left, col_right = st.columns(2)
 
-    with col_left:
-        _render_confidence_metric(confidence)
-        # FIX BUG 4: Use len(sources_used) instead of len(results)
-        sources_count = len(rag_result.get("sources_used", []))
-        st.metric(
-            label="Sources Found",
-            value=sources_count,
-            help="Number of document chunks retrieved from the knowledge base.",
-        )
+    conf_pct = int(confidence * 100)
+    if confidence >= 0.65:
+        bar_color = "#28a745"
+        conf_label = f"Strong Evidence ({conf_pct}%)"
+    elif confidence >= 0.35:
+        bar_color = "#ffc107"
+        conf_label = f"Moderate Evidence ({conf_pct}%)"
+    else:
+        bar_color = "#dc3545"
+        conf_label = f"Weak Evidence ({conf_pct}%)"
 
-    with col_right:
-        st.markdown("**Answer Type**")
-        if answer_type == "Document Answer":
-            st.markdown(":green[Document Answer — grounded in your uploaded documents]")
-        elif answer_type == "Partial Answer":
-            st.markdown(":orange[Partial Answer — docs supplemented with general knowledge]")
-        elif answer_type == "Evidence Only":
-            st.markdown(":blue[Evidence Only — no API key, showing raw retrieved text]")
-        elif answer_type == "single_document_summary":
-            # FIX BUG 3: Single document label
-            st.markdown(":green[Single Document Summary — grounded in uploaded document]")
-        elif answer_type == "map_reduce":
-            # FIX BUG 3: Multi-document label
-            st.markdown(":green[Multi-document Map-Reduce Summary — grounded in uploaded documents]")
-        else:
-            st.markdown(":blue[General / Fallback Answer]")
+    st.markdown(f"""
+<div style="margin:1rem 0;">
+    <div style="display:flex; justify-content:space-between; margin-bottom:0.3rem;">
+        <span style="font-weight:bold; color:#444;">Retrieval Confidence</span>
+        <span style="color:{bar_color}; font-weight:bold;">{conf_label}</span>
+    </div>
+    <div style="background:#e9ecef; border-radius:6px; height:10px;">
+        <div style="background:{bar_color}; width:{conf_pct}%; height:10px;
+                    border-radius:6px; transition:width 0.5s ease;"></div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-        st.markdown("**Fallback Used**")
-        # FIX BUG 6: Better fallback detection logic
-        is_fallback = (
-            fallback_used
-            or "fallback" in answer_type.lower()
-            or answer_type in ("General Answer", "Partial Answer")
-            or rag_result.get("provider") in ("none", "unknown")
-        )
-        if is_fallback:
-            st.markdown(":orange[Yes — answer extends beyond document evidence]")
-        else:
-            st.markdown(":green[No — answer is fully grounded in uploaded documents]")
+    col1, col2, col3 = st.columns(3)
+    sources_count = len(rag_result.get("sources_used", []))
+    col1.metric("Sources Found", sources_count)
+    col2.metric("Answer Type", answer_type.replace("_", " ").title())
+    col3.metric(
+        "Provider",
+        (rag_result.get("provider") or "N/A").replace("_", " ").title(),
+    )
 
     # ------------------------------------------------------------------ #
     # Section C — Sources expander                                         #
@@ -282,19 +265,7 @@ _GRAPH_RESULT_KEY = "_graph_last_rag_result"
 
 
 def render_graph_answer(result: dict[str, Any]) -> None:
-    """Render a GraphRAG result with full three-section layout.
-
-    Section A — Answer:
-        answer-type badge → answer text → provider caption → limitations
-
-    Section B — Confidence metrics:
-        confidence percentage, evidence quality, graph usage status
-
-    Section C — Graph evidence + citations expanders
-
-    Args:
-        result: Dict returned by ``src.graph_bridge.query_with_graph()``.
-    """
+    """Render a GraphRAG result with full three-section layout."""
     answer = result.get("answer", "")
     answer_type = result.get("answer_type", "cited")
     provider = result.get("provider", "none")
@@ -311,7 +282,6 @@ def render_graph_answer(result: dict[str, Any]) -> None:
     # ------------------------------------------------------------------ #
     st.markdown("---")
 
-    # Answer-type badge
     at_label = _ANSWER_TYPE_LABELS.get(answer_type, answer_type.title())
     if answer_type == "cited":
         st.success(f"GraphRAG Answer Type: {at_label}  ✓")
@@ -422,7 +392,11 @@ def render_chat_section(
         The current rag_result dict (latest answer in session state), or None if
         no answer has been generated yet.
     """
-    st.subheader("Step 4 — Ask AI a Question")
+    render_step_header(
+        4,
+        "Ask AI a Question",
+        "Get grounded answers with source citations",
+    )
 
     if graph_pipeline is not None and graph_pipeline.is_ready:
         _spacy_note = (

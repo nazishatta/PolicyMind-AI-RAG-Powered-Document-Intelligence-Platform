@@ -15,6 +15,7 @@ import streamlit as st
 from app.components.chat_ui import render_chat_section
 from app.components.source_display import render_graph_panel, render_sources
 from app.components.upload_ui import render_upload_section
+from app.components.ui_helpers import render_step_header
 from src.logger import get_logger
 from src.text_splitter import split_documents_into_chunks
 from src.vector_store import create_vector_store, get_collection_stats, reset_vector_store
@@ -35,10 +36,81 @@ except Exception as _graph_import_err:
 # ---------------------------------------------------------------------------
 st.set_page_config(
     page_title="PolicyMind AI",
-    page_icon="📋",
+    page_icon="🔍",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# ---------------------------------------------------------------------------
+# Global CSS
+# ---------------------------------------------------------------------------
+st.markdown("""
+<style>
+/* Main header */
+.main-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d6a9f 100%);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    color: white;
+}
+/* Step cards */
+.step-card {
+    background: #f8f9fa;
+    border-left: 4px solid #2d6a9f;
+    padding: 1rem 1.5rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1rem;
+}
+/* Answer card */
+.answer-card {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+/* Metric card */
+.metric-card {
+    background: #f0f7ff;
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+}
+/* Source badge strong */
+.badge-strong {
+    background: #d4edda;
+    color: #155724;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+/* Source badge moderate */
+.badge-moderate {
+    background: #fff3cd;
+    color: #856404;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+/* Source badge weak */
+.badge-weak {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+/* Hide streamlit default elements */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+.stDeployButton {display: none;}
+</style>
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Session-state initialization (one-time defaults)
@@ -50,61 +122,85 @@ if "graph_pipeline" not in st.session_state:
 # Sidebar
 # ---------------------------------------------------------------------------
 with st.sidebar:
-    st.header("About PolicyMind AI")
-    st.markdown(
-        """
-**PolicyMind AI** is a RAG-powered document intelligence platform that lets you
-upload policy documents and ask plain-language questions about their content.
+    st.markdown("## 🔍 PolicyMind AI")
+    st.markdown("*Intelligent Policy Document Analysis*")
+    st.divider()
 
----
+    st.markdown("### 📋 How It Works")
+    st.markdown("""
+1. 📄 **Upload** policy PDF documents
+2. 🧠 **Index** with ChromaDB + Knowledge Graph
+3. 🔎 **Search** semantically across documents
+4. 💬 **Ask** natural language questions
+5. 📌 **Get** grounded answers with citations
+""")
+    st.divider()
 
-**How it works**
-1. Upload a PDF
-2. Build a semantic knowledge base (ChromaDB)
-3. Search for relevant passages
-4. Ask AI questions answered from the document evidence
+    st.markdown("### ⚙️ RAG Mode")
+    _last_result = st.session_state.get("rag_result")
+    if _last_result:
+        _routing = _last_result.get("routing_decision", "standard_rag")
+        if _routing == "map_reduce":
+            st.info("🗺️ Map-Reduce RAG active")
+        elif _routing == "graph_rag":
+            st.success("🕸️ GraphRAG active")
+        else:
+            st.info("🔍 Standard RAG active")
+    else:
+        st.info("🔍 Standard RAG active")
+    st.divider()
 
----
+    st.markdown("### 🛠️ Tech Stack")
+    _tech_data = {
+        "Layer": ["UI", "Embeddings", "Vector DB", "Graph", "LLM", "PDF"],
+        "Technology": ["Streamlit", "all-MiniLM-L6-v2", "ChromaDB",
+                       "NetworkX", "Groq LLaMA 3", "PyMuPDF"],
+    }
+    st.dataframe(_tech_data, hide_index=True, use_container_width=True)
+    st.divider()
 
-**Tech stack**
-| Layer | Technology |
-|---|---|
-| UI | Streamlit |
-| Embeddings | sentence-transformers/all-MiniLM-L6-v2 |
-| Vector DB | ChromaDB (cosine) |
-| LLM | OpenAI GPT-4o-mini *(optional)* |
-| PDF parsing | PyMuPDF (fitz) |
-| Chunking | LangChain RecursiveCharacterTextSplitter |
+    # API status
+    st.markdown("### 🔑 API Status")
+    _api_status = check_api_keys()
+    st.caption(f"Config: `{_api_status['env_path']}`")
+    if _api_status["env_exists"]:
+        st.success("✓ .env file found")
+    else:
+        st.warning("⚠ .env file not found")
+    if _api_status["groq_available"]:
+        st.success(f"✓ Groq connected ({_api_status['groq_key_length']} chars)")
+    else:
+        st.info("○ Groq not configured")
+    if _api_status["openai_available"]:
+        st.success(f"✓ OpenAI connected ({_api_status['openai_key_length']} chars)")
+    else:
+        st.info("○ OpenAI not configured")
 
----
-
-**Answer confidence tiers**
-
-| Score | Type | Meaning |
-|---|---|---|
-| ≥ 65% | Document Answer | Grounded in your documents |
-| 45–65% | Partial Answer | Docs + general knowledge |
-| < 45% | General Answer | Primarily general knowledge |
-
----
-*Configure `OPENAI_API_KEY` in `.env` to enable AI answers.*
-"""
-    )
-
-    # Graph stats panel (only when pipeline is active)
+    # Graph stats (when pipeline is active)
     _sidebar_gp = st.session_state.get("graph_pipeline")
     if _sidebar_gp is not None and _sidebar_gp.is_ready:
-        st.divider()
         _sidebar_gs = _sidebar_gp.knowledge_graph.get_stats()
-        st.markdown("**Knowledge Graph (active)**")
-        st.metric("Entities", _sidebar_gs["entity_count"])
-        st.metric("Relations", _sidebar_gs["relation_count"])
-        if _sidebar_gs["top_entities"]:
-            st.markdown("**Top entities:**")
-            for _ent in _sidebar_gs["top_entities"][:3]:
-                st.markdown(f"- {_ent}")
-
+        st.success(
+            f"🕸️ Graph active: {_sidebar_gs['entity_count']:,} entities | "
+            f"{_sidebar_gs['relation_count']:,} relations"
+        )
     st.divider()
+
+    # Session stats
+    st.markdown("### 📊 Session Stats")
+    _pages_ss = st.session_state.get("pages", [])
+    _chunks_ss = st.session_state.get("chunks", [])
+    _doc_names_ss = list({p.get("document_name", "") for p in _pages_ss if p.get("document_name")})
+
+    _sc1, _sc2 = st.columns(2)
+    _sc1.metric("Documents", len(_doc_names_ss))
+    _sc2.metric("Pages", len(_pages_ss))
+    _sc1.metric("Chunks", len(_chunks_ss))
+    if _sidebar_gp is not None and _sidebar_gp.is_ready:
+        _gs2 = _sidebar_gp.knowledge_graph.get_stats()
+        _sc2.metric("Entities", _gs2["entity_count"])
+    st.divider()
+
     if st.button("Reset session", help="Clear all uploaded data and start over"):
         for _key in (
             "pages", "chunks", "vector_store",
@@ -115,35 +211,30 @@ upload policy documents and ask plain-language questions about their content.
             st.session_state.pop(_key, None)
         st.rerun()
 
-    # API key diagnostics
-    st.divider()
-    st.subheader("System Status")
-    _api_status = check_api_keys()
-
-    st.caption(f"Configuration: `{_api_status['env_path']}`")
-    if _api_status["env_exists"]:
-        st.success("✓ .env file found")
-    else:
-        st.warning("⚠ .env file not found")
-
-    # Groq status
-    if _api_status["groq_available"]:
-        st.success(f"✓ Groq connected ({_api_status['groq_key_length']} chars)")
-    else:
-        st.info(f"○ Groq not configured ({_api_status['groq_key_length']} chars)")
-
-    # OpenAI status
-    if _api_status["openai_available"]:
-        st.success(f"✓ OpenAI connected ({_api_status['openai_key_length']} chars)")
-    else:
-        st.info(f"○ OpenAI not configured ({_api_status['openai_key_length']} chars)")
+    st.markdown("""
+<div style='text-align:center; color:#888; font-size:0.8em; margin-top:1rem;'>
+Built by Nazish Atta<br>
+MS Data Science · GWU<br>
+<a href='https://github.com/nazishatta'>GitHub</a>
+</div>
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
-# Title
+# Main header
 # ---------------------------------------------------------------------------
-st.title("PolicyMind AI")
-st.caption("RAG-Powered Document Intelligence Platform")
-st.divider()
+st.markdown("""
+<div class="main-header">
+    <h1 style="color:white; margin:0; font-size:2.2rem;">
+        🔍 PolicyMind AI
+    </h1>
+    <p style="color:#b8d4f0; margin:0.5rem 0 0 0; font-size:1.1rem;">
+        RAG-Powered Document Intelligence Platform
+    </p>
+    <p style="color:#8ab8e0; margin:0.3rem 0 0 0; font-size:0.9rem;">
+        GraphRAG • Map-Reduce • Semantic Search • Grounded Citations
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
 # Step 1 — Upload document
@@ -155,10 +246,20 @@ if pages is not None:
 # ---------------------------------------------------------------------------
 # Step 2 — Build knowledge base
 # ---------------------------------------------------------------------------
-st.subheader("Step 2 — Build Knowledge Base")
+render_step_header(
+    2,
+    "Build Knowledge Base",
+    "Index documents with vector embeddings and knowledge graph",
+)
 
 if "pages" not in st.session_state:
-    st.warning("Complete Step 1 first: upload a document.")
+    st.markdown("""
+<div style="text-align:center; padding:2rem;
+            background:#fff3cd; border-radius:12px; margin:1rem 0;">
+    <h4 style="margin:0 0 0.5rem 0;">⚠️ No documents loaded yet</h4>
+    <p style="margin:0;">Complete Step 1 first: upload a document</p>
+</div>
+""", unsafe_allow_html=True)
 else:
     use_graph_rag = st.toggle(
         "Use GraphRAG (entity extraction + knowledge graph)",
@@ -199,12 +300,7 @@ else:
         )
 
     def _build_kb(reset_first: bool = False) -> None:
-        """Build the standard vector store, then optionally build the knowledge graph.
-
-        The graph is built on top of the same chunks so both share the same
-        document corpus.  If the graph build fails, standard RAG continues to
-        work normally.
-        """
+        """Build the standard vector store, then optionally build the knowledge graph."""
         # -- Standard vector store (always) ----------------------------------
         try:
             with st.spinner(
@@ -295,10 +391,20 @@ else:
 # ---------------------------------------------------------------------------
 # Step 3 — Semantic search
 # ---------------------------------------------------------------------------
-st.subheader("Step 3 — Semantic Search")
+render_step_header(
+    3,
+    "Semantic Search",
+    "Find relevant passages across your documents",
+)
 
 if "vector_store" not in st.session_state:
-    st.warning("Complete Step 2 first: build the knowledge base.")
+    st.markdown("""
+<div style="text-align:center; padding:2rem;
+            background:#fff3cd; border-radius:12px; margin:1rem 0;">
+    <h4 style="margin:0 0 0.5rem 0;">⚠️ Knowledge base not built yet</h4>
+    <p style="margin:0;">Click <strong>Reset &amp; Rebuild Knowledge Base</strong> to index your documents</p>
+</div>
+""", unsafe_allow_html=True)
 else:
     _stats3 = get_collection_stats()
     _doc_names3 = _stats3["documents"]
@@ -349,8 +455,18 @@ else:
 # Step 4 — Ask AI a question
 # ---------------------------------------------------------------------------
 if "vector_store" not in st.session_state:
-    st.subheader("Step 4 — Ask AI a Question")
-    st.warning("Complete Step 2 first: build the knowledge base.")
+    render_step_header(
+        4,
+        "Ask AI a Question",
+        "Get grounded answers with source citations",
+    )
+    st.markdown("""
+<div style="text-align:center; padding:2rem;
+            background:#fff3cd; border-radius:12px; margin:1rem 0;">
+    <h4 style="margin:0 0 0.5rem 0;">⚠️ Knowledge base not built yet</h4>
+    <p style="margin:0;">Click <strong>Reset &amp; Rebuild Knowledge Base</strong> to index your documents</p>
+</div>
+""", unsafe_allow_html=True)
 else:
     _stats4 = get_collection_stats()
     _doc_names4 = _stats4["documents"]
@@ -379,7 +495,6 @@ else:
 latest_results: list = []
 
 if "rag_result" in st.session_state:
-    # FIX BUG 5: Use sources_used for map_reduce and single_document_summary
     _rag_result = st.session_state["rag_result"]
     latest_results = _rag_result.get("sources_used") or _rag_result.get("results", [])
 elif "search_results" in st.session_state:
@@ -406,5 +521,9 @@ if latest_results:
                 "documents_indexed": _n_docs,
             })
 else:
-    st.subheader("Step 5 — View Sources")
+    render_step_header(
+        5,
+        "View Sources",
+        "Explore retrieved evidence and confidence scores",
+    )
     st.info("Run a search or ask a question to see source evidence here.")
