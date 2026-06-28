@@ -10,16 +10,20 @@ _ROOT = Path(__file__).resolve().parent.parent
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-import streamlit as st
+import streamlit as st  # noqa: E402
 
-from app.components.chat_ui import render_chat_section
-from app.components.source_display import render_graph_panel, render_sources
-from app.components.upload_ui import render_upload_section
-from app.components.ui_helpers import render_step_header
-from src.logger import get_logger
-from src.text_splitter import split_documents_into_chunks
-from src.vector_store import create_vector_store, get_collection_stats, reset_vector_store
-from src.rag_chain import check_api_keys
+from app.components.chat_ui import render_chat_section  # noqa: E402
+from app.components.source_display import render_graph_panel, render_sources  # noqa: E402
+from app.components.ui_helpers import render_step_header  # noqa: E402
+from app.components.upload_ui import render_upload_section  # noqa: E402
+from src.logger import get_logger  # noqa: E402
+from src.rag_chain import check_api_keys  # noqa: E402
+from src.text_splitter import split_documents_into_chunks  # noqa: E402
+from src.vector_store import (  # noqa: E402
+    create_vector_store,
+    get_collection_stats,
+    reset_vector_store,
+)
 
 logger = get_logger(__name__)
 

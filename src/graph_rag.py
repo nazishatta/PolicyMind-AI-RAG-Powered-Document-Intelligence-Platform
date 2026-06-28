@@ -14,7 +14,7 @@ Degrades gracefully at every level:
 
 from __future__ import annotations
 
-import os
+import contextlib
 from pathlib import Path
 from typing import Any
 
@@ -590,13 +590,13 @@ def answer_question_with_graph_rag(
         ``sources``         (list[str])
         ``query_type``      (str)
     """
+    from src.citation_utils import format_sources  # noqa: PLC0415
     from src.rag_chain import (  # noqa: PLC0415
         answer_question_with_rag,
         build_context_from_results,
         detect_query_type,
         generate_rag_answer,
     )
-    from src.citation_utils import format_sources  # noqa: PLC0415
 
     # ── Fallback guard ───────────────────────────────────────────────────────
     if graph_pipeline is None or not graph_pipeline.is_ready:
@@ -653,10 +653,8 @@ def answer_question_with_graph_rag(
         # Step 5 — Collect query entities for display
         entities_found: list[str] = []
         if graph_pipeline.knowledge_graph is not None:
-            try:
+            with contextlib.suppress(Exception):
                 entities_found = graph_pipeline.knowledge_graph.extract_query_entities(question)
-            except Exception:
-                pass
 
         graph_boost_used = any(r.get("graph_boost", 0.0) > 0.0 for r in results)
 

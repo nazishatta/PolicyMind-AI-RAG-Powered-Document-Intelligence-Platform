@@ -6,12 +6,10 @@ from __future__ import annotations
 from typing import Any
 
 import streamlit as st
-
 from langchain_community.vectorstores import Chroma
 
 from app.components.ui_helpers import render_step_header
 from src.logger import get_logger
-from src.rag_chain import answer_question_with_rag
 
 logger = get_logger(__name__)
 

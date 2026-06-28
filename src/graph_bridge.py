@@ -13,12 +13,13 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
+import contextlib
 import hashlib
 import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ _BACKEND_DIR = str(Path(__file__).resolve().parent.parent / "backend")
 
 # Module-level cache for imported backend symbols (None = not yet attempted;
 # empty dict = attempted but failed)
-_backend_refs: Optional[dict[str, Any]] = None
+_backend_refs: dict[str, Any] | None = None
 _load_attempted: bool = False
 
 
@@ -79,7 +80,7 @@ class _GroqBridgeProvider:
 # Backend import helper
 # ---------------------------------------------------------------------------
 
-def _load_backend() -> Optional[dict[str, Any]]:
+def _load_backend() -> dict[str, Any] | None:
     """Import backend modules, preserving the Streamlit app's ``app`` package.
 
     The backend uses ``app.*`` imports internally.  We temporarily clear all
@@ -118,7 +119,9 @@ def _load_backend() -> Optional[dict[str, Any]]:
     try:
         from app.config import Settings  # type: ignore  # noqa: PLC0415
         from app.core.document_loader import PolicyDocument  # type: ignore  # noqa: PLC0415
-        from app.core.embeddings import get_embedding_model as _get_emb  # type: ignore  # noqa: PLC0415
+        from app.core.embeddings import (
+            get_embedding_model as _get_emb,  # type: ignore  # noqa: PLC0415
+        )
         from app.services.graph_service import build_graph_service  # type: ignore  # noqa: PLC0415
         from app.services.llm_service import build_llm_provider  # type: ignore  # noqa: PLC0415
         from app.services.rag_pipeline import GraphRAGPipeline  # type: ignore  # noqa: PLC0415
@@ -155,10 +158,8 @@ def _load_backend() -> Optional[dict[str, Any]]:
 
         # 4. Remove backend/ from sys.path
         if _inserted:
-            try:
+            with contextlib.suppress(ValueError):
                 sys.path.remove(_BACKEND_DIR)
-            except ValueError:
-                pass
 
 
 # ---------------------------------------------------------------------------
@@ -188,10 +189,10 @@ def _run_async(coro_fn: Any, *args: Any, **kwargs: Any) -> Any:
             nest_asyncio.apply()
             loop = asyncio.get_event_loop()
             return loop.run_until_complete(coro_fn(*args, **kwargs))
-        except ImportError:
+        except ImportError as exc:
             raise RuntimeError(
                 "Cannot run async GraphRAG query. Install nest-asyncio: pip install nest-asyncio"
-            )
+            ) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -217,7 +218,7 @@ def is_graph_available() -> bool:
     return bool(refs)
 
 
-def init_graph_pipeline() -> Optional[Any]:
+def init_graph_pipeline() -> Any | None:
     """Initialise and cache the GraphRAG pipeline in Streamlit session state.
 
     LLM provider priority (mirrors the standard RAG chain):
@@ -431,7 +432,7 @@ def ingest_documents_to_graph(pages_list: list[dict[str, Any]]) -> dict[str, Any
 
 def query_with_graph(
     question: str,
-    document_filter: Optional[str] = None,
+    document_filter: str | None = None,
 ) -> dict[str, Any]:
     """Run a query through the GraphRAG pipeline.
 
@@ -464,7 +465,7 @@ def query_with_graph(
         return _error_result("GraphRAG pipeline is not initialised.")
 
     # Convert document_filter (filename) to doc_id for the pipeline
-    doc_id_filter: Optional[str] = None
+    doc_id_filter: str | None = None
     if document_filter and document_filter != "All Documents":
         doc_id_filter = _doc_id_from_name(document_filter)
 

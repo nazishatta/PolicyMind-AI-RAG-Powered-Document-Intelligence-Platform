@@ -27,12 +27,12 @@ _COSINE_META = {"hnsw:space": "cosine"}
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-def _get_client() -> chromadb.PersistentClient:
+def _get_client() -> Any:
     """Return a persistent chromadb client pointing at CHROMA_DB_PATH."""
     return chromadb.PersistentClient(path=CHROMA_DB_PATH)
 
 
-def _ensure_cosine_collection(client: chromadb.PersistentClient) -> chromadb.Collection:
+def _ensure_cosine_collection(client: Any) -> Any:
     """Get or create the collection with cosine distance metric.
 
     If the collection already exists the metadata is NOT changed (ChromaDB does
@@ -62,7 +62,7 @@ def _chunks_to_langchain_docs(
     return texts, metadatas, ids
 
 
-def _langchain_wrapper(client: chromadb.PersistentClient) -> Chroma:
+def _langchain_wrapper(client: Any) -> Chroma:
     """Return a LangChain Chroma wrapper around the already-configured chromadb client."""
     return Chroma(
         client=client,

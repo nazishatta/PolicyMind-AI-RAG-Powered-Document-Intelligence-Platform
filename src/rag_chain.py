@@ -332,7 +332,7 @@ def _call_openai(
         max_tokens=1500,
         temperature=0.3,
     )
-    return response.choices[0].message.content
+    return response.choices[0].message.content or ""
 
 
 def _call_groq(
@@ -367,7 +367,7 @@ def _call_groq(
         max_tokens=1500,
         temperature=0.3,
     )
-    return response.choices[0].message.content
+    return response.choices[0].message.content or ""
 
 
 # ---------------------------------------------------------------------------

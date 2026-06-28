@@ -466,7 +466,7 @@ def reduce_summaries(
     """
     # Filter to only successful summaries
     successful = [d for d in doc_summaries if d.get("success", False)]
-    errors = [d.get("error") for d in doc_summaries if d.get("error")]
+    errors: list[str] = [str(d.get("error")) for d in doc_summaries if d.get("error")]
 
     if not successful:
         error_msg = "All documents failed to process. Please check the debug errors."
