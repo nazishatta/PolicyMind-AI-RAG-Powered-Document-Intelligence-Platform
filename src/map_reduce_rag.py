@@ -418,7 +418,7 @@ def map_document(
             temperature=0.3,
         )
 
-        summary = response.choices[0].message.content.strip()
+        summary = (response.choices[0].message.content or "").strip()
         logger.info("map_document: '%s' success with %d chunks, avg_score=%.3f", doc_name, len(chunks), avg_score)
 
         return {
@@ -525,7 +525,7 @@ def reduce_summaries(
             temperature=0.3,
         )
 
-        final_answer = response.choices[0].message.content.strip()
+        final_answer = (response.choices[0].message.content or "").strip()
         logger.info("reduce_summaries: synthesized %d documents successfully", len(successful))
         return final_answer, errors
 
