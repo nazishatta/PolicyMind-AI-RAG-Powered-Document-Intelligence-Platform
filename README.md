@@ -1,6 +1,8 @@
 # PolicyMind AI
 
-**GraphRAG-powered policy document intelligence — semantic search, entity graphs, and citation-backed answers over complex public-policy corpora.**
+![CI](https://github.com/nazishatta/PolicyMind-AI-RAG-Powered-Document-Intelligence-Platform/actions/workflows/ci.yml/badge.svg)
+
+**GraphRAG-powered policy document intelligence Ã¢â‚¬â€ semantic search, entity graphs, and citation-backed answers over complex public-policy corpora.**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -35,7 +37,7 @@
 
 ## The Problem
 
-Public policy documents — climate agreements, regulatory frameworks, health directives — are long, cross-referential, and dense with named entities: agencies, dates, targets, obligations, and relationships between them. Researchers, analysts, and civic technologists need to navigate these corpora quickly and trace every claim back to its source.
+Public policy documents Ã¢â‚¬â€ climate agreements, regulatory frameworks, health directives Ã¢â‚¬â€ are long, cross-referential, and dense with named entities: agencies, dates, targets, obligations, and relationships between them. Researchers, analysts, and civic technologists need to navigate these corpora quickly and trace every claim back to its source.
 
 Standard keyword search misses context. Generic chat-with-PDF tools produce confident-sounding answers with no audit trail. Neither approach surfaces the structural relationships that give policy text its meaning.
 
@@ -47,14 +49,14 @@ Standard Retrieval-Augmented Generation retrieves the most similar text chunks a
 
 | Capability | Standard RAG | PolicyMind AI |
 |---|---|---|
-| Semantic search | ✓ | ✓ |
-| Citation tracing (page · excerpt · score) | Partial | ✓ Structured citations with page numbers |
-| Entity relationship graphs | ✗ | ✓ spaCy NER + NetworkX |
-| Graph-augmented score fusion | ✗ | ✓ Hybrid vector + graph reranking (0.7/0.3) |
-| Smart query routing | ✗ | ✓ Map-Reduce · GraphRAG · Standard |
-| Multi-document comparative analysis | ✗ | ✓ Per-document Map phase + synthesis Reduce |
-| Explainable confidence scores | ✗ | ✓ Visual progress bar with Strong/Moderate/Weak tiers |
-| Provider flexibility | Varies | ✓ Groq LLaMA 3.1 primary, OpenAI GPT-4o-mini optional |
+| Semantic search | Ã¢Å“â€œ | Ã¢Å“â€œ |
+| Citation tracing (page Ã‚Â· excerpt Ã‚Â· score) | Partial | Ã¢Å“â€œ Structured citations with page numbers |
+| Entity relationship graphs | Ã¢Å“â€” | Ã¢Å“â€œ spaCy NER + NetworkX |
+| Graph-augmented score fusion | Ã¢Å“â€” | Ã¢Å“â€œ Hybrid vector + graph reranking (0.7/0.3) |
+| Smart query routing | Ã¢Å“â€” | Ã¢Å“â€œ Map-Reduce Ã‚Â· GraphRAG Ã‚Â· Standard |
+| Multi-document comparative analysis | Ã¢Å“â€” | Ã¢Å“â€œ Per-document Map phase + synthesis Reduce |
+| Explainable confidence scores | Ã¢Å“â€” | Ã¢Å“â€œ Visual progress bar with Strong/Moderate/Weak tiers |
+| Provider flexibility | Varies | Ã¢Å“â€œ Groq LLaMA 3.1 primary, OpenAI GPT-4o-mini optional |
 
 ---
 
@@ -70,14 +72,14 @@ A smart query router automatically selects the best retrieval strategy: Map-Redu
 
 ## Key Features
 
-- **Smart query routing** — keyword-based classifier automatically routes to Map-Reduce, GraphRAG, or Standard RAG based on query intent
-- **GraphRAG hybrid retrieval** — vector search fused with knowledge-graph entity re-ranking (70% vector weight, 30% graph boost)
-- **Map-Reduce for multi-document queries** — processes each document independently in the Map phase, then synthesizes a cross-document answer in the Reduce phase
-- **Grounded answers with page citations** — every answer includes document name, page number, relevance score, and verbatim text excerpt
-- **Explainable confidence scores** — visual progress bar colour-coded as Strong (≥65%), Moderate (35–65%), or Weak (<35%)
-- **Multi-document support** — upload multiple PDFs, all indexed into a shared knowledge base with per-document retrieval
-- **Local embeddings** — `all-MiniLM-L6-v2` runs fully on CPU with no external API calls, keeping document content private by default
-- **Graceful degradation** — falls back to standard vector search when spaCy or NetworkX are unavailable, with clear UI indicators
+- **Smart query routing** Ã¢â‚¬â€ keyword-based classifier automatically routes to Map-Reduce, GraphRAG, or Standard RAG based on query intent
+- **GraphRAG hybrid retrieval** Ã¢â‚¬â€ vector search fused with knowledge-graph entity re-ranking (70% vector weight, 30% graph boost)
+- **Map-Reduce for multi-document queries** Ã¢â‚¬â€ processes each document independently in the Map phase, then synthesizes a cross-document answer in the Reduce phase
+- **Grounded answers with page citations** Ã¢â‚¬â€ every answer includes document name, page number, relevance score, and verbatim text excerpt
+- **Explainable confidence scores** Ã¢â‚¬â€ visual progress bar colour-coded as Strong (Ã¢â€°Â¥65%), Moderate (35Ã¢â‚¬â€œ65%), or Weak (<35%)
+- **Multi-document support** Ã¢â‚¬â€ upload multiple PDFs, all indexed into a shared knowledge base with per-document retrieval
+- **Local embeddings** Ã¢â‚¬â€ `all-MiniLM-L6-v2` runs fully on CPU with no external API calls, keeping document content private by default
+- **Graceful degradation** Ã¢â‚¬â€ falls back to standard vector search when spaCy or NetworkX are unavailable, with clear UI indicators
 
 ---
 
@@ -135,7 +137,7 @@ All pipeline components are resolved at startup from environment variables. No c
 
 ### Prerequisites
 - Python 3.10 or higher
-- Groq API key — free at [console.groq.com](https://console.groq.com)
+- Groq API key Ã¢â‚¬â€ free at [console.groq.com](https://console.groq.com)
 
 ### Installation
 
@@ -186,14 +188,14 @@ No secrets are committed to this repository.
 
 ## How to Use
 
-1. **Upload Documents** — Upload one or more PDF policy documents using the file uploader. Multiple files are indexed together into a shared knowledge base.
-2. **Build Knowledge Base** — Click **Reset & Rebuild Knowledge Base** to index documents with vector embeddings. Optionally enable GraphRAG to also build a knowledge graph.
-3. **Semantic Search** — Search for relevant passages across your documents to preview retrieval quality before asking questions.
-4. **Ask Questions** — Ask natural language questions. The smart router automatically selects the best strategy:
+1. **Upload Documents** Ã¢â‚¬â€ Upload one or more PDF policy documents using the file uploader. Multiple files are indexed together into a shared knowledge base.
+2. **Build Knowledge Base** Ã¢â‚¬â€ Click **Reset & Rebuild Knowledge Base** to index documents with vector embeddings. Optionally enable GraphRAG to also build a knowledge graph.
+3. **Semantic Search** Ã¢â‚¬â€ Search for relevant passages across your documents to preview retrieval quality before asking questions.
+4. **Ask Questions** Ã¢â‚¬â€ Ask natural language questions. The smart router automatically selects the best strategy:
    - *Map-Reduce* is triggered by words like "summarize", "compare", "overview", "across documents"
    - *GraphRAG* is triggered by words like "relationship", "organization", "between", "responsible for"
    - *Standard RAG* handles all other specific factual questions
-5. **View Sources** — Every answer includes document name, page number, relevance score, and a verbatim excerpt for every retrieved passage.
+5. **View Sources** Ã¢â‚¬â€ Every answer includes document name, page number, relevance score, and a verbatim excerpt for every retrieved passage.
 
 ### Example Questions
 
@@ -216,11 +218,11 @@ PolicyMind AI is designed to behave like a careful research assistant: useful, t
 
 | Mechanism | Implementation |
 |---|---|
-| **Visual confidence scoring** | Every answer displays a colour-coded progress bar — green (≥65% Strong), yellow (35–65% Moderate), red (<35% Weak) — computed from retrieved chunk similarity scores |
-| **Page-level citations** | Every source card shows document name, page number, cosine relevance score, and a verbatim excerpt — no claims without evidence |
-| **Answer type classification** | Badge on every response: Document Answer · Map-Reduce · GraphRAG · Partial Answer · Evidence Only — signals how grounded the answer is |
+| **Visual confidence scoring** | Every answer displays a colour-coded progress bar Ã¢â‚¬â€ green (Ã¢â€°Â¥65% Strong), yellow (35Ã¢â‚¬â€œ65% Moderate), red (<35% Weak) Ã¢â‚¬â€ computed from retrieved chunk similarity scores |
+| **Page-level citations** | Every source card shows document name, page number, cosine relevance score, and a verbatim excerpt Ã¢â‚¬â€ no claims without evidence |
+| **Answer type classification** | Badge on every response: Document Answer Ã‚Â· Map-Reduce Ã‚Â· GraphRAG Ã‚Â· Partial Answer Ã‚Â· Evidence Only Ã¢â‚¬â€ signals how grounded the answer is |
 | **Routing transparency** | UI displays which retrieval strategy was used (Standard RAG / Map-Reduce / GraphRAG) and why, so users understand the evidence path |
-| **Evidence-only fallback** | When no LLM API key is configured, the system returns raw retrieved passages instead of generating an answer — the primary hallucination pathway is blocked at the source |
+| **Evidence-only fallback** | When no LLM API key is configured, the system returns raw retrieved passages instead of generating an answer Ã¢â‚¬â€ the primary hallucination pathway is blocked at the source |
 
 **What these mechanisms do not guarantee:** hallucinations remain possible with any LLM provider; retrieval is incomplete when the corpus is incomplete; confidence scores are heuristic, not calibrated probabilities. All outputs should be verified against original source documents.
 
@@ -230,46 +232,46 @@ PolicyMind AI is designed to behave like a careful research assistant: useful, t
 
 ```
 PolicyMind-AI/
-├── app/
-│   ├── streamlit_app.py         # Main Streamlit application entry point
-│   └── components/
-│       ├── chat_ui.py           # Step 4: Q&A panel, answer card, confidence bar
-│       ├── source_display.py    # Step 5: Source evidence cards
-│       ├── upload_ui.py         # Step 1: PDF upload and document preview
-│       └── ui_helpers.py        # Shared step header renderer
-├── src/
-│   ├── config.py                # Environment variable configuration
-│   ├── document_loader.py       # PyMuPDF PDF processing (multi-file)
-│   ├── text_splitter.py         # LangChain RecursiveCharacterTextSplitter
-│   ├── vector_store.py          # ChromaDB create / query / reset
-│   ├── retriever.py             # Semantic search + retrieval quality scoring
-│   ├── rag_chain.py             # Standard RAG pipeline + Groq/OpenAI integration
-│   ├── graph_rag.py             # GraphRAG: spaCy NER + NetworkX + hybrid search
-│   ├── map_reduce_rag.py        # Map-Reduce pipeline + smart query router
-│   ├── citation_utils.py        # Source formatting helpers
-│   └── logger.py                # Structured logging setup
-├── docs/
-│   └── Screenshots/             # Application screenshots
-├── data/
-│   └── raw/                     # Uploaded PDF storage (gitignored)
-├── vector_db/
-│   └── chroma/                  # ChromaDB persistent storage (gitignored)
-├── requirements.txt             # Python dependencies
-├── .env.example                 # Environment variable template
-└── README.md
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ app/
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ streamlit_app.py         # Main Streamlit application entry point
+Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ components/
+Ã¢â€â€š       Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ chat_ui.py           # Step 4: Q&A panel, answer card, confidence bar
+Ã¢â€â€š       Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ source_display.py    # Step 5: Source evidence cards
+Ã¢â€â€š       Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ upload_ui.py         # Step 1: PDF upload and document preview
+Ã¢â€â€š       Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ ui_helpers.py        # Shared step header renderer
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ src/
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ config.py                # Environment variable configuration
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ document_loader.py       # PyMuPDF PDF processing (multi-file)
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ text_splitter.py         # LangChain RecursiveCharacterTextSplitter
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ vector_store.py          # ChromaDB create / query / reset
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ retriever.py             # Semantic search + retrieval quality scoring
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ rag_chain.py             # Standard RAG pipeline + Groq/OpenAI integration
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ graph_rag.py             # GraphRAG: spaCy NER + NetworkX + hybrid search
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ map_reduce_rag.py        # Map-Reduce pipeline + smart query router
+Ã¢â€â€š   Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ citation_utils.py        # Source formatting helpers
+Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ logger.py                # Structured logging setup
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ docs/
+Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ Screenshots/             # Application screenshots
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ data/
+Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ raw/                     # Uploaded PDF storage (gitignored)
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ vector_db/
+Ã¢â€â€š   Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ chroma/                  # ChromaDB persistent storage (gitignored)
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ requirements.txt             # Python dependencies
+Ã¢â€Å“Ã¢â€â‚¬Ã¢â€â‚¬ .env.example                 # Environment variable template
+Ã¢â€â€Ã¢â€â‚¬Ã¢â€â‚¬ README.md
 ```
 
 ---
 
 ## Roadmap
 
-- [ ] **Streaming responses** — server-sent events for long LLM completions
-- [ ] **Additional LLM providers** — Anthropic Claude, Mistral, and local Ollama support
-- [ ] **Fine-tuned NER** — domain-adapted entity extraction for policy terminology
-- [ ] **Non-English support** — multilingual embeddings for EU and UN document corpora
-- [ ] **Async ingestion** — background task processing for large PDF batches
-- [ ] **Persistent graph export** — GraphML / RDF serialisation for graph portability
-- [ ] **Evaluation harness** — labeled Q&A pairs over public policy corpora for retrieval benchmarking
+- [ ] **Streaming responses** Ã¢â‚¬â€ server-sent events for long LLM completions
+- [ ] **Additional LLM providers** Ã¢â‚¬â€ Anthropic Claude, Mistral, and local Ollama support
+- [ ] **Fine-tuned NER** Ã¢â‚¬â€ domain-adapted entity extraction for policy terminology
+- [ ] **Non-English support** Ã¢â‚¬â€ multilingual embeddings for EU and UN document corpora
+- [ ] **Async ingestion** Ã¢â‚¬â€ background task processing for large PDF batches
+- [ ] **Persistent graph export** Ã¢â‚¬â€ GraphML / RDF serialisation for graph portability
+- [ ] **Evaluation harness** Ã¢â‚¬â€ labeled Q&A pairs over public policy corpora for retrieval benchmarking
 
 ---
 
@@ -283,4 +285,4 @@ High-priority areas: additional LLM providers, multilingual support, and annotat
 
 ## License
 
-[MIT](LICENSE) — free for research, education, and civic technology use.
+[MIT](LICENSE) Ã¢â‚¬â€ free for research, education, and civic technology use.
