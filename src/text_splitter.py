@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from src.config import CHUNK_OVERLAP, CHUNK_SIZE
 from src.logger import get_logger
