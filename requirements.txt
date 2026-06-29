@@ -53,3 +53,5 @@ pytest>=8.2.0
 
 # GraphRAG dependencies
 nest-asyncio>=1.6.0
+requests>=2.31.0
+groq>=0.9.0
