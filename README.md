@@ -4,7 +4,9 @@
 
 ![CI](https://github.com/nazishatta/PolicyMind-AI-RAG-Powered-Document-Intelligence-Platform/actions/workflows/ci.yml/badge.svg)  [![Open in Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-sm.svg)](https://huggingface.co/spaces/nazishatta/PolicyMind-AI)
 
-**GraphRAG-powered policy document intelligence — semantic search, entity graphs, and citation-backed answers over complex public-policy corpora.**
+****[Try the live app here](https://nazishatta-policymind-ai.hf.space/)** | [GitHub](https://github.com/nazishatta/PolicyMind-AI-RAG-Powered-Document-Intelligence-Platform)
+
+GraphRAG-powered policy document intelligence — semantic search, entity graphs, and citation-backed answers over complex public-policy corpora.**
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -164,7 +166,7 @@ copy .env.example .env
 streamlit run app/streamlit_app.py
 ```
 
-Open **http://localhost:8501** in your browser.
+Open **https://nazishatta-policymind-ai.hf.space/** in your browser, or run locally at **http://localhost:8501**.
 
 > **Note:** spaCy is optional. Without it, GraphRAG falls back to vector-only mode and entity extraction is skipped. All other features work normally.
 
